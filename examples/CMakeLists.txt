@@ -7,35 +7,20 @@
 # the paths must be relative to those directories.
 #
 
-if(OS_MAC)
-  # Shared macOS resources (menus, icons, etc).
-  set(SHARED_RESOURCES_SRCS
-    ../shared/mac/English.lproj/InfoPlist.strings
-    ../shared/mac/English.lproj/MainMenu.xib
-    ../shared/mac/shared.icns
-    )
+# Shared Windows resources (version information, icons).
+set(SHARED_RESOURCES_SRCS
+  ../shared/win/big.ico
+  ../shared/win/resource.h
+  ../shared/win/small.ico
+  )
 
-  # Info.plist files used for main and helper app bundles.
-  set(SHARED_INFO_PLIST ../shared/mac/Info.plist.in)
-  set(SHARED_HELPER_INFO_PLIST ../shared/mac/helper-Info.plist.in)
-elseif(OS_WINDOWS)
-  # Shared Windows resources (version information, icons).
-  set(SHARED_RESOURCES_SRCS
-    ../shared/win/big.ico
-    ../shared/win/resource.h
-    ../shared/win/small.ico
-    )
-
-  # Manifest files used for executables.
-  set(SHARED_EXE_MANIFEST ../shared/win/shared.exe.manifest)
-  set(SHARED_COMPATIBILITY_MANIFEST ../shared/win/compatibility.manifest)
-endif()
-
+# Manifest files used for executables.
+set(SHARED_EXE_MANIFEST ../shared/win/shared.exe.manifest)
+set(SHARED_COMPATIBILITY_MANIFEST ../shared/win/compatibility.manifest)
 
 #
 # Shared configuration.
 #
-
 # Support nice project/target organization in Visual Studio and Xcode.
 if(OS_MACOSX OR OS_WINDOWS)
   # Enable the creation of project folders.
@@ -59,13 +44,8 @@ if(OS_MACOSX OR OS_WINDOWS)
   endmacro()
 endif()
 
-# Set the configuration-specific binary output directory.
-if(GEN_NINJA OR GEN_MAKEFILES)
-  # Force Ninja and Make to create a subdirectory named after the configuration.
-  set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-  set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
-endif()
+# Set the binary output directory.
+set(EXAMPLE_TARGET_OUT_DIR "${CMAKE_BINARY_DIR}/")
 
 # Set properties common to all example targets.
 macro(SET_EXAMPLE_PROPERTIES target)
@@ -92,22 +72,16 @@ macro(SET_EXAMPLE_EXECUTABLE_TARGET_PROPERTIES target)
   SET_EXECUTABLE_TARGET_PROPERTIES(${target})
   SET_EXAMPLE_PROPERTIES(${target})
 
-  if(OS_LINUX)
-    # Set rpath so that libraries can be placed next to the executable.
-    set_target_properties(${target} PROPERTIES INSTALL_RPATH "$ORIGIN")
-    set_target_properties(${target} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-  elseif(OS_WINDOWS)
-    # Add the custom Windows manifest files to the executable.
-    add_custom_command(
-      TARGET ${target}
-      POST_BUILD
-      COMMAND "mt.exe" -nologo
-              -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
-                        \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
-              -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.exe"\;\#1
-      COMMENT "Adding manifest..."
-      )
-  endif()
+  # Add the custom Windows manifest files to the executable.
+  add_custom_command(
+    TARGET ${target}
+    POST_BUILD
+    COMMAND "mt.exe" -nologo
+            -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_EXE_MANIFEST}\"
+                      \"${CMAKE_CURRENT_SOURCE_DIR}/${SHARED_COMPATIBILITY_MANIFEST}\"
+            -outputresource:"${EXAMPLE_TARGET_OUT_DIR}/${target}.exe"\;\#1
+    COMMENT "Adding manifest..."
+    )
 endmacro()
 
 
@@ -119,7 +93,4 @@ endmacro()
 add_subdirectory(shared)
 
 # Example executable targets.
-add_subdirectory(message_router)
 add_subdirectory(minimal)
-add_subdirectory(resource_manager)
-add_subdirectory(scheme_handler)
